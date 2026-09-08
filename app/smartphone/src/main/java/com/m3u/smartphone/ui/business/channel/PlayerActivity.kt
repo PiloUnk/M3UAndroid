@@ -3,6 +3,7 @@ package com.m3u.smartphone.ui.business.channel
 import android.content.Intent
 import android.content.res.Configuration
 import android.os.Bundle
+import android.view.WindowManager
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
@@ -120,18 +121,25 @@ class PlayerActivity : ComponentActivity() {
 
     override fun onResume() {
         super.onResume()
+        // The player View's own `keepScreenOn` propagation is unreliable on some OEMs
+        // (e.g. Samsung One UI), so this Activity keeps the window flag directly while
+        // playback is active, mirroring the reset below so the screen isn't kept on
+        // once playback is left.
+        window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
         viewModel.pauseOrContinue(true)
     }
 
     override fun onPause() {
         super.onPause()
         if (!isInPictureInPictureMode) {
+            window.clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
             viewModel.pauseOrContinue(false)
         }
     }
 
     override fun onDestroy() {
         super.onDestroy()
+        window.clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
         viewModel.destroy()
     }
 }
